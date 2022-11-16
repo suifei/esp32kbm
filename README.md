@@ -4,11 +4,11 @@
 > 
 > 注意事项：指令和代码注解不支持中文
 
-基于ESP32开发的蓝牙无线鼠标、键盘，支持下发指令并编程。
+基于ESP32开发的蓝牙无线鼠标、键盘，支持下发指令并编程（javascript）。
 
 ## 一、如何工作？
 
-接通5V电源，启动设备后，将模拟蓝牙键盘。在 `iPhone` 内选择连接 `Smart Keyboard/Mouse`。
+接通5V电源，启动设备后，将模拟蓝牙键盘和蓝牙鼠标。在 `iPhone` 内选择连接 `Smart Keyboard/Mouse`。
 当没有连接任何设备时，LED 会闪烁。连接后，能够通过串行端口将命令发送到设备，设备将映射 `keyCodes` 并将其发送到蓝牙客户端 `iPhone`。
 
 发送控制 LED 命令示例：
@@ -265,6 +265,18 @@ $RUN
 
 ## 四、开发
 
-设备与电脑之间的连接通过串行端口完成。足够满足调试需求。
+设备与电脑之间的连接通过串口完成。足够满足调试需求。
 串口波特率:`115200`
 
+## 五、三方库
+
+- duktape 2.7.0 http://duktape.org/
+- ESP32-BLE-Combo 0.1.0 https://github.com/blackketter/ESP32-BLE-Combo
+
+非常感谢所有这些库的作者和贡献者。
+
+## 六、授权
+
+The source code is licensed under GPL v3. License is available [here](/LICENSE).
+
+ESP32KBM was originally developed by suifei.
