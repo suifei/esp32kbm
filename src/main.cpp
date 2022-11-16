@@ -175,11 +175,11 @@ void js_eval(const char *code) {
 }
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   js_setup();
 
   js_eval("print('Starting work!');");
-  js_eval("pin_mode(2, 3); //pin=LED=2 , mode=OUTPUT");
+  js_eval("pin_mode(2, 3);");
   js_eval("ble_start();");
 }
 
