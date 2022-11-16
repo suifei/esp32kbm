@@ -13,3 +13,4 @@ _deps
 .pio
 .vscode
 .DS_Store
+*/.DS_Store
