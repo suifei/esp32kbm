@@ -6,7 +6,7 @@ const parser = port.pipe(new ReadlineParser())
 
 parser.on('data', console.log)
 
-console.log("发送重新启动 LCTRL 29 + LALT 56 + LSHIFT 42 + CMD 125 + R 19")
+console.log("发送重新启动 LCTRL  + LALT  + LSHIFT  + CMD  + R ")
 
 
 async function keyDownUp( ...keycodes) {
