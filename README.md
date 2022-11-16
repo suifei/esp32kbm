@@ -1,6 +1,6 @@
 # esp32kbm
 
-> sf15628@ly.com
+> suifei at gmail dot com
 > 
 > 注意事项：指令和代码注解不支持中文
 
