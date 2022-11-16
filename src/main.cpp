@@ -184,12 +184,14 @@ void setup() {
 }
 
 void handleMessage() {
+  digitalWrite(LED, HIGH);
   if (canRun && !script.isEmpty()) {
     js_eval(script.c_str());
     Serial.print(".");
   } else {
     canRun = false;
   }
+  digitalWrite(LED, LOW);
 }
 
 void loop() {
