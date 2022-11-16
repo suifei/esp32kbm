@@ -192,6 +192,8 @@ void handleMessage() {
     canRun = false;
   }
   digitalWrite(LED, LOW);
+
+  delay(1);
 }
 
 void loop() {
@@ -231,4 +233,5 @@ void loop() {
   } else if (ledState == HIGH) {
     digitalWrite(LED, LOW);
   }
+
 }
