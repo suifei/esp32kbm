@@ -7,6 +7,51 @@ String script;
 int ledState = LOW;
 unsigned long previousMillis = 0;
 bool canRun = false;
+int32_t runtime_register[0x10] = {0, 0, 0, 0, 0, 0, 0, 0,
+                                  0, 0, 0, 0, 0, 0, 0, 0};
+
+//清空寄存器
+static duk_ret_t js_native_rclear(duk_context *ctx) {
+  int index = -1;
+  int n = duk_get_top(ctx);
+
+  if (n > 0) {
+    index = duk_to_number(ctx, 0);
+  }
+
+  if (index < 0) {
+    memset(runtime_register, 0, 0x10);
+    duk_push_boolean(ctx, true);
+  } else if (index > 0xf) {
+    duk_push_boolean(ctx, false);
+  } else {
+    runtime_register[index] = 0;
+    duk_push_boolean(ctx, true);
+  }
+  return 1;
+}
+//读寄存器
+static duk_ret_t js_native_rread(duk_context *ctx) {
+  int index = duk_to_number(ctx, 0);
+  if (index < 0 || index > 0xf) {
+    duk_push_number(ctx, 0);
+    return 1;
+  }
+  duk_push_number(ctx, runtime_register[index]);
+  return 1;
+}
+//写寄存器
+static duk_ret_t js_native_rwrite(duk_context *ctx) {
+  int index = duk_to_number(ctx, 0);
+  int32_t val = duk_to_number(ctx, 1);
+  if (index < 0 || index > 0xf) {
+    duk_push_boolean(ctx, false);
+    return 1;
+  }
+  runtime_register[index] = val;
+  duk_push_boolean(ctx, true);
+  return 1;
+}
 
 //打印到串口
 static duk_ret_t js_native_print(duk_context *ctx) {
@@ -35,6 +80,63 @@ static duk_ret_t js_native_mouse_move(duk_context *ctx) {
   Mouse.move(x, y);
   return 0; /* one return value */
 }
+//移动鼠标到
+static duk_ret_t js_native_mouse_move_to(duk_context *ctx) {
+  int x = duk_to_number(ctx, 0);
+  int y = duk_to_number(ctx, 1);
+  // abs move
+  int tx1 = 0;
+  int tx2 = x;
+  if (x != 0) {
+    tx1 = int(abs(x) / 127);
+    tx2 = int(abs(x) % 127);
+  }
+  int ty1 = 0;
+  int ty2 = y;
+  if (y != 0) {
+    ty1 = int(abs(y) / 127);
+    ty2 = int(abs(y) % 127);
+  }
+
+  Serial.printf("tx1:%d tx2:%d ty1:%d ty2:%d\n", tx1, tx2, ty1, ty2);
+
+  int tx3 = 0;
+  int ty3 = 0;
+  while (tx3 != tx1 || ty3 != ty1) {
+    int mx = 0;
+    int my = 0;
+    if (tx3 < tx1) {
+      mx = x > 0 ? 127 : -127;
+      tx3++;
+    }
+    if (ty3 < ty1) {
+      my = y > 0 ? 127 : -127;
+      ty3++;
+    }
+
+    Mouse.move(mx, my);
+    delay(10);
+  }
+  tx3 = 0;
+  ty3 = 0;
+
+  while (tx3 != tx2 || ty3 != ty2) {
+    int mx = 0;
+    int my = 0;
+    if (tx3 < tx2) {
+      mx = x > 0 ? 1 : -1;
+      tx3++;
+    }
+    if (ty3 < ty2) {
+      my = y > 0 ? 1 : -1;
+      ty3++;
+    }
+    Mouse.move(mx, my);
+    delay(10);
+  }
+
+  return 0;
+}
 //滚动鼠标
 static duk_ret_t js_native_mouse_scroll(duk_context *ctx) {
   int w = duk_to_number(ctx, 0);
@@ -47,6 +149,19 @@ static duk_ret_t js_native_mouse_click(duk_context *ctx) {
   Mouse.click(b);
   return 0; /* one return value */
 }
+//鼠标按下
+static duk_ret_t js_native_mouse_down(duk_context *ctx) {
+  int b = duk_to_number(ctx, 0);
+  Mouse.press(b);
+  return 0; /* one return value */
+}
+//鼠标抬起
+static duk_ret_t js_native_mouse_up(duk_context *ctx) {
+  int b = duk_to_number(ctx, 0);
+  Mouse.release(b);
+  return 0; /* one return value */
+}
+
 //键盘输入字符串
 static duk_ret_t js_native_keyboard_print(duk_context *ctx) {
   duk_push_string(ctx, " ");
@@ -113,6 +228,15 @@ static duk_ret_t js_native_pinMode(duk_context *ctx) {
 void js_setup() {
   ctx = duk_create_heap_default();
 
+  duk_push_c_function(ctx, js_native_rclear, DUK_VARARGS);
+  duk_put_global_string(ctx, "rclear");
+
+  duk_push_c_function(ctx, js_native_rwrite, DUK_VARARGS);
+  duk_put_global_string(ctx, "rwrite");
+
+  duk_push_c_function(ctx, js_native_rread, DUK_VARARGS);
+  duk_put_global_string(ctx, "rread");
+
   duk_push_c_function(ctx, js_native_print, DUK_VARARGS);
   duk_put_global_string(ctx, "print");
 
@@ -137,11 +261,20 @@ void js_setup() {
   duk_push_c_function(ctx, js_native_mouse_move, DUK_VARARGS);
   duk_put_global_string(ctx, "mouse_move");
 
+  duk_push_c_function(ctx, js_native_mouse_move_to, DUK_VARARGS);
+  duk_put_global_string(ctx, "mouse_move_to");
+
   duk_push_c_function(ctx, js_native_mouse_scroll, DUK_VARARGS);
   duk_put_global_string(ctx, "mouse_scroll");
 
   duk_push_c_function(ctx, js_native_mouse_click, DUK_VARARGS);
   duk_put_global_string(ctx, "mouse_click");
+
+  duk_push_c_function(ctx, js_native_mouse_down, DUK_VARARGS);
+  duk_put_global_string(ctx, "mouse_down");
+
+  duk_push_c_function(ctx, js_native_mouse_up, DUK_VARARGS);
+  duk_put_global_string(ctx, "mouse_up");
 
   duk_push_c_function(ctx, js_native_keyboard_print, DUK_VARARGS);
   duk_put_global_string(ctx, "keyboard_print");
@@ -184,14 +317,16 @@ void setup() {
 }
 
 void handleMessage() {
-  digitalWrite(LED, HIGH);
+
   if (canRun && !script.isEmpty()) {
+    digitalWrite(LED, HIGH);
+
     js_eval(script.c_str());
     Serial.print(".");
+    digitalWrite(LED, LOW);
   } else {
     canRun = false;
   }
-  digitalWrite(LED, LOW);
 
   delay(1);
 }
@@ -200,18 +335,18 @@ void loop() {
   if (Serial.available()) {
     digitalWrite(LED, HIGH);
     String cmd = Serial.readStringUntil('\n');
-    if (strcmp(cmd.c_str(), "$CAT") == 0) {
+    if (strcmp(cmd.c_str(), "#CAT") == 0) {
       Serial.println("SCRIPT:");
       Serial.println(script);
-    } else if (strcmp(cmd.c_str(), "$CLS") == 0) {
+    } else if (strcmp(cmd.c_str(), "#CLS") == 0) {
       Serial.println("SCRIPT CLEAR.");
       script = "";
       canRun = false;
-    } else if (strcmp(cmd.c_str(), "$RUN") == 0) {
+    } else if (strcmp(cmd.c_str(), "#RUN") == 0) {
       Serial.println("SCRIPT RUN.");
       Serial.println(script);
       canRun = true;
-    } else if (strcmp(cmd.c_str(), "$STOP") == 0) {
+    } else if (strcmp(cmd.c_str(), "#STOP") == 0) {
       Serial.println("SCRIPT STOP.");
       canRun = false;
     } else {
@@ -233,5 +368,4 @@ void loop() {
   } else if (ledState == HIGH) {
     digitalWrite(LED, LOW);
   }
-
 }

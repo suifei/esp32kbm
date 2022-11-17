@@ -18,12 +18,12 @@ pin_mode(2,3); //Sets the digital pin 2 as output
 ```
 
 ```js
-$CLS
+#CLS
 write(2,1); //Write a HIGH value to a digital pin.
 delay(1000); //waits for a second
 write(2,0); //Write a LOW value to a digital pin.
 delay(1000); //waits for a second
-$RUN
+#RUN
 ```
 
 说明：基于`javascript`语法，当通过串行端口将此命令发送到设备。
@@ -36,18 +36,22 @@ $RUN
 
 ```javascript
 //查看当前运行的脚本代码
-$CAT
+#CAT
 //清空当前运行的脚本代码
-$CLS
+#CLS
 //运行脚本代码
-$RUN
+#RUN
 //停止脚本运行
-$STOP
+#STOP
 ```
 
 ### 2. 脚本代码指令
 
 ```javascript
+//全局寄存器16个，每个存储32位值，从0-15读写
+rclear([i]); //清空寄存器，i<0或不传则清空全部，返回 true, false
+rread(i); //读取第i个寄存器，返回值或0
+rwrite(i,v); //写入v到第i个寄存器,返回 true , false
 //硬件函数
 print(); //打印输出到串口
 delay(n); //延迟，n 毫秒
@@ -63,10 +67,13 @@ keyboard_println("atest");//发送文本，自动映射ASCII按键 string，带�
 keyboard_write(k); //发送按键消息，包含了(KeyDown,KeyUp)，k 按键码 uint8
 keyboard_press(k); //发送按键消息，只包含(KeyDown)，组合键使用，k 按键码 uint8
 keyboard_releaseAll(); //释放按键，多次 press 一起释放，组合键使用，无参数
-//鼠标函数，参考[鼠标]定义
+//鼠标函数，参考[鼠标]定义，取值范围是-127 ~ 127
 mouse_move(x,y); //发送鼠标移动消息，x,y = -1,0,1 ，分别表示 xy 负坐标,原点,正坐标，uint8
+mouse_move_to(x,y[,delay]); //移动鼠标到目标 x，y坐标，每次移动的延时，默认 100
 mouse_scroll(w); //发送鼠标滚动消息，w = -1,0,1，分别表示 y 负坐标,原点,正坐标，uint8，水平滚动未开放
-mouse_click(b); //发送鼠标按键消息，b = 1/2/4/8/16，表示不同按键，包含(MouseDown，MouseUp)，uint8，事件拆分未开放
+mouse_click(b); //发送鼠标按键消息，b = 1/2/4/8/16，表示不同按键，包含(MouseDown，MouseUp)，uint8
+mouse_down(b); //发送鼠标按键按下消息
+mouse_up(b); //发送鼠标按键松开消息
 ```
 
 #### 2.1 write 电平信号
@@ -190,7 +197,7 @@ const MediaKeyReport KEY_MEDIA_EMAIL_READER = {0, 128};
 ### 1. 使用组合键
 
 ```js
-$CLS
+#CLS
 
 //Sending Ctrl+Alt+Delete
 keyboard_press(0x80);//KEY_LEFT_CTRL
@@ -205,13 +212,27 @@ delay(500);
 keyboard_println("atest");//Sending Test and 'Enter'
 delay(1000);
 
-$RUN
+#RUN
 ```
 
 ### 2. 鼠标移动
 
 ```js
-$CLS
+#CLS
+//clear all register
+rclear();
+//read register 0
+if ( rread(0) == 0  ) {
+    mouse_move_to(-1000,-1000);
+    delay(1000);
+    mouse_move_to(800,800);
+    delay(1000);
+    //write register 0, value 1
+    rwrite(0,1);
+    print("begin");
+}
+print("procc");
+
 if(ble_check()){
     var count = 100;
     //x=0,y-1,Move mouse pointer up
@@ -237,13 +258,42 @@ if(ble_check()){
 
     delay(1000);
 }
-$RUN
+#RUN
 ```
 
 ### 3. 鼠标滚动和按钮
 
+模拟拖动画面
 ```js
-$CLS
+#CLS
+if(ble_check()){
+    
+    mouse_move_to(-1000,-1000);
+    delay(1000);
+    mouse_move_to(800,800);
+    delay(1000);
+
+    //move to screen center
+    mouse_move_to(-1000,1000,100);
+    mouse_down(1);
+    for(var n=0;n<1000;n++){
+        mouse_move(0,-1);
+        delay(1);
+    }
+    mouse_up(1);
+    delay(100);
+    for(var n=0;n<1000;n++){
+        mouse_move(0,1);
+        delay(1);
+    }
+    mouse_move_to(-200,-200,100);
+    delay(3000);
+}
+#RUN
+```
+
+```js
+#CLS
 mouse_scroll(-1); //w-1,Scroll Down
 delay(500);
 mouse_click(1); //MOUSE_LEFT click
@@ -260,7 +310,7 @@ mouse_click(1 | 2); //Click left+right mouse button at the same time
 delay(500);
 mouse_click(1 | 2 | 4);//Click left+right mouse button and scroll wheel at the same time
 delay(500);
-$RUN
+#RUN
 ```
 
 ## 四、开发
