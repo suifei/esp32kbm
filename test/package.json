@@ -4,7 +4,7 @@
   "description": "This directory is intended for PlatformIO Test Runner and project tests.",
   "main": "app.js",
   "scripts": {
-    "test": "uglifyjs examples/tiktok.js -o dist/tiktok.min.js && node app.js dist/tiktok.min.js /dev/cu.wchusbserial14142130 115200"
+    "test": "node app.js examples/tiktok.js /dev/cu.wchusbserial14142130 115200"
   },
   "author": "",
   "license": "ISC",

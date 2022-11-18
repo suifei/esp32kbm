@@ -23,7 +23,7 @@ setTimeout(() => {
         readFile(file, { encoding: 'ascii' }, (err, data) => {
             if (err) throw err
             data.split('\n').forEach(v => {
-                port.write(v + '\n');
+                port.write(v.trim() + '\n');
                 console.log(v)
             })
             port.write('#RUN\n')

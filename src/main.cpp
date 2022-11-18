@@ -2,7 +2,7 @@
 #include <BleCombo.h>
 #include <duktape.h>
 
-#define LED 2
+#include "config.h"
 
 duk_context *ctx;
 String script;
@@ -247,8 +247,7 @@ static duk_ret_t js_native_pinMode(duk_context *ctx) {
 }
 
 //注册js函数
-void js_setup() {
-  ctx = duk_create_heap_default();
+void js_native_bind() {
 
   duk_push_c_function(ctx, js_native_rclear, DUK_VARARGS);
   duk_put_global_string(ctx, "rclear");
@@ -315,12 +314,14 @@ void js_setup() {
 }
 //执行js代码
 void js_eval(const char *code) {
-  js_setup();
+
+  ctx = duk_create_heap_default();
+  js_native_bind();
   duk_push_string(ctx, code);
   duk_int_t rc = duk_peval(ctx);
 
   if (rc != DUK_EXEC_SUCCESS) {
-    
+
     Serial.printf("%s\n", duk_safe_to_stacktrace(ctx, -1));
     canRun = false;
 
@@ -334,6 +335,8 @@ void js_eval(const char *code) {
 
   duk_pop(ctx);
   duk_destroy_heap(ctx);
+
+  delay(1);
 }
 
 void setup() {
@@ -343,19 +346,28 @@ void setup() {
   js_eval("ble_start();");
 }
 
+void flashLED(){
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= 500) {
+    ledState = (ledState == LOW) ? HIGH : LOW;
+    digitalWrite(LED, ledState);
+    previousMillis = currentMillis;
+  }
+}
+
 void handleMessage() {
 
   if (canRun && !script.isEmpty()) {
     digitalWrite(LED, HIGH);
-
     js_eval(script.c_str());
     Serial.print(".");
     digitalWrite(LED, LOW);
+
   } else {
     canRun = false;
-  }
 
-  delay(1);
+    flashLED();
+  }
 }
 
 void loop() {
@@ -394,12 +406,7 @@ void loop() {
   handleMessage();
 
   if (!Keyboard.isConnected()) {
-    unsigned long currentMillis = millis();
-    if (currentMillis - previousMillis >= 500) {
-      ledState = (ledState == LOW) ? HIGH : LOW;
-      digitalWrite(LED, ledState);
-      previousMillis = currentMillis;
-    }
+    flashLED();
   } else if (ledState == HIGH) {
     digitalWrite(LED, LOW);
   }
