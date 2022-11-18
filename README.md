@@ -255,7 +255,7 @@ if(ble_check()){
 ```
 ### 4. 模拟拖动画面
 
-打开 TikTok App. 后运行
+打开 TikTok App 后运行，自动切视频并点赞👍
 
 ```js
 #STOP
@@ -282,6 +282,10 @@ if (ble_check()) {
     mouse_up(1);
     delay(600);
     mouse_move_to(0, 700, 10, 15);
+    delay(100);
+    mouse_click(1);
+    delay(100);
+    mouse_click(1);
     //wait 1~5 sec.
     delay(randRange(1000, 5000));
 } else {
