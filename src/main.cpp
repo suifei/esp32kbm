@@ -18,8 +18,8 @@ static duk_ret_t js_native_rclear(duk_context *ctx) {
   if (n > 0) {
     index = duk_to_number(ctx, 0);
   }
-
-  if (index < 0) {
+  // Serial.printf("rclear(%d);\n", index);
+  if (index == -1) {
     memset(runtime_register, 0, 0x10);
     duk_push_boolean(ctx, true);
   } else if (index > 0xf) {
@@ -37,13 +37,16 @@ static duk_ret_t js_native_rread(duk_context *ctx) {
     duk_push_number(ctx, 0);
     return 1;
   }
-  duk_push_number(ctx, runtime_register[index]);
+  int32_t val = runtime_register[index];
+  // Serial.printf("%d= rread(%d);\n", val, index);
+  duk_push_number(ctx, val);
   return 1;
 }
 //写寄存器
 static duk_ret_t js_native_rwrite(duk_context *ctx) {
   int index = duk_to_number(ctx, 0);
   int32_t val = duk_to_number(ctx, 1);
+  // Serial.printf("rwrite(%d,%d);\n", index, val);
   if (index < 0 || index > 0xf) {
     duk_push_boolean(ctx, false);
     return 1;
@@ -84,21 +87,38 @@ static duk_ret_t js_native_mouse_move(duk_context *ctx) {
 static duk_ret_t js_native_mouse_move_to(duk_context *ctx) {
   int x = duk_to_number(ctx, 0);
   int y = duk_to_number(ctx, 1);
-  // abs move
+  int step = 127;
+  int wait = 20;
+
+  int n = duk_get_top(ctx);
+  if (n >2 ) {
+    step = duk_to_number(ctx, 2);
+    if (step < -127 || step >127){
+      step = step < 0 ? -127 : 127;
+    }
+  }
+
+  if (n > 3) {
+    wait = duk_to_number(ctx, 3);
+    if (wait < 1 ){
+      wait = 1;
+    }
+  }
+
   int tx1 = 0;
   int tx2 = x;
   if (x != 0) {
-    tx1 = int(abs(x) / 127);
-    tx2 = int(abs(x) % 127);
+    tx1 = int(abs(x) / step);
+    tx2 = int(abs(x) % step);
   }
   int ty1 = 0;
   int ty2 = y;
   if (y != 0) {
-    ty1 = int(abs(y) / 127);
-    ty2 = int(abs(y) % 127);
+    ty1 = int(abs(y) / step);
+    ty2 = int(abs(y) % step);
   }
 
-  Serial.printf("tx1:%d tx2:%d ty1:%d ty2:%d\n", tx1, tx2, ty1, ty2);
+  // Serial.printf("tx1:%d tx2:%d ty1:%d ty2:%d\n", tx1, tx2, ty1, ty2);
 
   int tx3 = 0;
   int ty3 = 0;
@@ -106,16 +126,16 @@ static duk_ret_t js_native_mouse_move_to(duk_context *ctx) {
     int mx = 0;
     int my = 0;
     if (tx3 < tx1) {
-      mx = x > 0 ? 127 : -127;
+      mx = x > 0 ? step : -step;
       tx3++;
     }
     if (ty3 < ty1) {
-      my = y > 0 ? 127 : -127;
+      my = y > 0 ? step : -step;
       ty3++;
     }
 
     Mouse.move(mx, my);
-    delay(10);
+    delay(wait);
   }
   tx3 = 0;
   ty3 = 0;
@@ -132,7 +152,7 @@ static duk_ret_t js_native_mouse_move_to(duk_context *ctx) {
       ty3++;
     }
     Mouse.move(mx, my);
-    delay(10);
+    delay(wait);
   }
 
   return 0;
@@ -338,7 +358,8 @@ void loop() {
     if (strcmp(cmd.c_str(), "#CAT") == 0) {
       Serial.println("SCRIPT:");
       Serial.println(script);
-    } else if (strcmp(cmd.c_str(), "#CLS") == 0) {
+    } else if (strcmp(cmd.c_str(), "#CLS") == 0 ||
+               strcmp(cmd.c_str(), "#CLEAR") == 0) {
       Serial.println("SCRIPT CLEAR.");
       script = "";
       canRun = false;

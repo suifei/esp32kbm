@@ -38,7 +38,7 @@ delay(1000); //waits for a second
 //查看当前运行的脚本代码
 #CAT
 //清空当前运行的脚本代码
-#CLS
+#CLS、#CLEAR
 //运行脚本代码
 #RUN
 //停止脚本运行
@@ -69,7 +69,7 @@ keyboard_press(k); //发送按键消息，只包含(KeyDown)，组合键使用�
 keyboard_releaseAll(); //释放按键，多次 press 一起释放，组合键使用，无参数
 //鼠标函数，参考[鼠标]定义，取值范围是-127 ~ 127
 mouse_move(x,y); //发送鼠标移动消息，x,y = -1,0,1 ，分别表示 xy 负坐标,原点,正坐标，uint8
-mouse_move_to(x,y[,delay]); //移动鼠标到目标 x，y坐标，每次移动的延时，默认 100
+mouse_move_to(x,y[,step][,delay]); //移动鼠标到目标 x，y坐标，每次移动的步长，默认，-127~127，延时，默认 20,不可小于1
 mouse_scroll(w); //发送鼠标滚动消息，w = -1,0,1，分别表示 y 负坐标,原点,正坐标，uint8，水平滚动未开放
 mouse_click(b); //发送鼠标按键消息，b = 1/2/4/8/16，表示不同按键，包含(MouseDown，MouseUp)，uint8
 mouse_down(b); //发送鼠标按键按下消息
@@ -194,7 +194,18 @@ const MediaKeyReport KEY_MEDIA_EMAIL_READER = {0, 128};
 
 ## 三、示例
 
-### 1. 使用组合键
+### 1. 使用寄存器
+
+```js
+#CLS
+rclear();   //clear all register
+print(rread(0));    //read register0
+rwrite(0,100);  //write register0 ,value 100
+print(rread(0));    //print register0 value(100)
+delay(1000);    //delay 1 sec
+#RUN
+```
+### 2. 使用组合键
 
 ```js
 #CLS
@@ -214,25 +225,8 @@ delay(1000);
 
 #RUN
 ```
-
-### 2. 鼠标移动
-
+### 3. 鼠标移动坐标
 ```js
-#CLS
-//clear all register
-rclear();
-//read register 0
-if ( rread(0) == 0  ) {
-    mouse_move_to(-1000,-1000);
-    delay(1000);
-    mouse_move_to(800,800);
-    delay(1000);
-    //write register 0, value 1
-    rwrite(0,1);
-    print("begin");
-}
-print("procc");
-
 if(ble_check()){
     var count = 100;
     //x=0,y-1,Move mouse pointer up
@@ -258,39 +252,48 @@ if(ble_check()){
 
     delay(1000);
 }
-#RUN
 ```
+### 4. 模拟拖动画面
 
-### 3. 鼠标滚动和按钮
+打开 TikTok App. 后运行
 
-模拟拖动画面
 ```js
+#STOP
 #CLS
-if(ble_check()){
-    
-    mouse_move_to(-1000,-1000);
-    delay(1000);
-    mouse_move_to(800,800);
-    delay(1000);
-
-    //move to screen center
-    mouse_move_to(-1000,1000,100);
+if (ble_check()) {
+    var REG0 = 0x0;
+    var INIT_MOUSE = 0x1;
+    //read register 0
+    if (rread(REG0) != INIT_MOUSE) {
+        print("Init Mouse.");
+        //write register 0, value 1
+        rwrite(REG0, INIT_MOUSE);
+        //move to left top
+        mouse_move_to(-1000, -1000);
+        delay(1000);
+        //move to screen center
+        mouse_move_to(800, 700);
+        delay(1000);
+    }
     mouse_down(1);
-    for(var n=0;n<1000;n++){
-        mouse_move(0,-1);
-        delay(1);
-    }
+    delay(10);
+    mouse_move_to(0, -700, 10, 15);
+    delay(10);
     mouse_up(1);
-    delay(100);
-    for(var n=0;n<1000;n++){
-        mouse_move(0,1);
-        delay(1);
-    }
-    mouse_move_to(-200,-200,100);
-    delay(3000);
+    delay(600);
+    mouse_move_to(0, 700, 10, 15);
+    //wait 1~5 sec.
+    delay(randRange(1000, 5000));
+} else {
+    delay(1000);
+}
+//random int (n~m)
+function randRange(n, m) {
+    return parseInt(Math.floor(Math.random() * (m - n)) + n);
 }
 #RUN
 ```
+### 5. 鼠标滚动和按钮
 
 ```js
 #CLS
