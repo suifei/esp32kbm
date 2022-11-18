@@ -273,6 +273,11 @@ ls /dev/*usb*
 #node app.js 范例 串口路径 波特率
 node app.js ./examples/tiktok.js /dev/cu.wchusbserial14142130 115200 
 ```
+- NPM 启动（推荐），修改 `package.json` 的 `test` 命令，改成正确的`串口路径`
+```bash
+npm i
+npm test
+```
 
 普通流程，注意初始化寄存器第一次修改后，重新发布脚本前，请主动调用 `rclear()` 重置，否则不会执行光标居中逻辑。
 
