@@ -15,13 +15,21 @@ const parser = port.pipe(new ReadlineParser())
 
 parser.on('data', console.log)
 
-port.write('#RESETALL\n', 'ascii')
-port.write('#CLS\n', 'ascii')
-
+port.write('#RESETALL\n')
 setTimeout(() => {
-    readFile(file, { encoding: 'ascii' }, (err, data) => {
-        if (err) throw err
-        data.split('\n').forEach(v => { port.write(v + '\n', 'ascii'); console.log(v); })
-        port.write('#RUN\n', 'ascii')
-    })
-}, 1000)
+    port.write('#CLS\n')
+
+    setTimeout(() => {
+        readFile(file, { encoding: 'ascii' }, (err, data) => {
+            if (err) throw err
+            data.split('\n').forEach(v => {
+                port.write(v + '\n');
+                console.log(v)
+            })
+            port.write('#RUN\n')
+        })
+    }, 1000)
+
+}, 1000);
+
+

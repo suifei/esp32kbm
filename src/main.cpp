@@ -74,7 +74,6 @@ static duk_ret_t js_native_ble_check(duk_context *ctx) {
 }
 //启动蓝牙服务
 static duk_ret_t js_native_ble_start(duk_context *ctx) {
-
   Keyboard.begin();
   Mouse.begin();
   return 0;
@@ -321,7 +320,10 @@ void js_eval(const char *code) {
   duk_int_t rc = duk_peval(ctx);
 
   if (rc != DUK_EXEC_SUCCESS) {
+    
     Serial.printf("%s\n", duk_safe_to_stacktrace(ctx, -1));
+    canRun = false;
+
   } else {
     duk_safe_to_string(ctx, -1);
     String res = duk_get_string(ctx, -1);

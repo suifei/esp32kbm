@@ -1,61 +1,68 @@
-var REG0 = 0x0;
-var REG1 = 0x1;
-var STAGE_TOCENTER = 0x1;
-var STAGE_TOUP = 0x2;
-var STAGE_DCLICK = 0x3;
-var STAGE_WAIT = 0x4;
+var R0 = 0x0;
+var R1 = 0x1;
+var T_TC = 0x1;
+var T_TU = 0x2;
+var T_TDC = 0x3;
+var T_TW = 0x4;
+var T_M = 900;
 
 if (ble_check()) {
-    var stage = rread(REG0);
+    var stage = rread(R0);
+    var X_OFF = rand(-150, 150);
     switch (stage) {
         default: //default 0
             print('INIT');
-            rwrite(REG0, STAGE_TOCENTER);
+            rwrite(R0, T_TC);
             delay(100);
             break;
-        case STAGE_TOCENTER:
+        case T_TC:
             print('TO CENTER');
-            rwrite(REG0, STAGE_DCLICK);
+            rwrite(R0, T_TDC);
             mouse_move_to(-10000, -10000);//move to left top
-            delay(10);
-            mouse_move_to(800, 1000);//move to screen center
-            delay(10);
+            delay(100);
+            mouse_move_to(800, T_M);//move to screen center
+            delay(100);
             break;
-        case STAGE_TOUP:
+        case T_TU:
             print('TO UP');
-            rwrite(REG0, STAGE_DCLICK);
+            rwrite(R0, T_TDC);
             mouse_down(1);
             delay(10);
-            mouse_move_to(0, -800, 10, 15);
+            mouse_move_to(-X_OFF, -T_M, 50, 15);
             delay(10);
             mouse_up(1);
-            delay(100);
-            mouse_move_to(0, 1000, 100, 10);
-            delay(100);
+            delay(10);
+            mouse_move_to(X_OFF, T_M, 100, 10);
+            delay(10);
             break;
-        case STAGE_DCLICK:
+        case T_TDC:
             print('DCLICK');
-            rwrite(REG0, STAGE_WAIT);
+            var Y_OFF = rand(0, 300);
+            rwrite(R0, T_TW);
             //double click
+            mouse_move_to(-X_OFF, -Y_OFF, 50, 15);//random position
+            delay(10);
             mouse_click(1);
             delay(100);
             mouse_click(1);
             delay(100);
+            mouse_move_to(X_OFF, Y_OFF, 50, 15);//restore
+            delay(10);
             break;
-        case STAGE_WAIT:
+        case T_TW:
             print('WAIT');
-            rwrite(REG0, STAGE_TOUP);
+            rwrite(R0, T_TU);
             //wait 1~5 sec.
-            delay(randRange(1000, 5000));
-            if (rread(REG1) > 20) {
+            delay(rand(1000, 10000));
+            if (rread(R1) > 20) {
                 rclear(); //reset
             } else {
-                rwrite(REG1, rread(REG1) + 1);//inc reg1
+                rwrite(R1, rread(R1) + 1);//inc reg1
             }
             break;
     }
 }
 //random int (n~m)
-function randRange(n, m) {
+function rand(n, m) {
     return parseInt(Math.floor(Math.random() * (m - n)) + n);
 }
