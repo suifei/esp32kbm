@@ -255,10 +255,70 @@ if(ble_check()){
 ```
 ### 4. 模拟拖动画面
 
-打开 TikTok App 后运行，自动切视频并点赞👍
+打开 TikTok App 后运行，自动切视频并点♥️。
+
+状态机模式，区分每个动作，根据状态执行。
 
 ```js
-#STOP
+#CLS
+var REG0 = 0x0;
+var STAGE_TOCENTER = 0x1;
+var STAGE_TOUP = 0x2;
+var STAGE_DCLICK = 0x3;
+var STAGE_WAIT = 0x4;
+
+if (ble_check()) {
+	var stage = parseInt(rread(REG0));
+	print(stage);
+	print(STAGE_TOCENTER);
+	switch (stage) {
+		case STAGE_TOCENTER:
+			print('TO CENTER');
+			rwrite(REG0, STAGE_DCLICK);
+			mouse_move_to(-10000, -10000);//move to left top
+			delay(10);
+			mouse_move_to(800, 800);//move to screen center
+			delay(10);
+			break;
+		case STAGE_DCLICK:
+			print('DCLICK');
+			rwrite(REG0, STAGE_WAIT);
+			//double click
+			mouse_click(1);
+			delay(100);
+			mouse_click(1);
+			delay(100);
+			break;
+		case STAGE_WAIT:
+			print('WAIT');
+			rwrite(REG0, STAGE_TOUP);
+			//wait 1~5 sec.
+			delay(randRange(1000, 5000));
+			break;
+		case STAGE_TOUP:
+			print('TO UP');
+			rwrite(REG0, STAGE_TOCENTER);
+			mouse_down(1);
+			delay(10);
+			mouse_move_to(0, -700, 10, 15);
+			delay(10);
+			mouse_up(1);
+			delay(600);
+			break;
+		default:
+			print('TO UP');
+			rwrite(REG0, STAGE_TOCENTER);
+			delay(100);
+	}
+}
+//random int (n~m)
+function randRange(n, m) {
+	return parseInt(Math.floor(Math.random() * (m - n)) + n);
+}
+#RUN
+```
+普通流程，注意初始化寄存器第一次修改后，重新发布脚本前，请主动调用 `rclear()` 重置，否则不会执行光标居中逻辑。
+```js
 #CLS
 if (ble_check()) {
     var REG0 = 0x0;
@@ -269,7 +329,7 @@ if (ble_check()) {
         //write register 0, value 1
         rwrite(REG0, INIT_MOUSE);
         //move to left top
-        mouse_move_to(-1000, -1000);
+        mouse_move_to(-10000, -10000);
         delay(1000);
         //move to screen center
         mouse_move_to(800, 700);
@@ -296,6 +356,7 @@ function randRange(n, m) {
     return parseInt(Math.floor(Math.random() * (m - n)) + n);
 }
 #RUN
+
 ```
 ### 5. 鼠标滚动和按钮
 

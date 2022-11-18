@@ -1,9 +1,19 @@
 #include <Arduino.h>
 #include <BleCombo.h>
 #include <duktape.h>
+
 #define LED 2
+// #define DUK_USE_DEBUG
+// #define DUK_USE_DEBUG_LEVEL DUK_LEVEL_DDDEBUG
+// #define DUK_USE_DEBUG_WRITE(level, file, line, func, msg) \
+//   do { \
+//     Serial.printf("D%ld %s:%d (%s): %s\n", (long)(level), (file), \
+//                   (long)(line), (func), (msg)); \
+// } while (0)
+
 duk_context *ctx;
 String script;
+
 int ledState = LOW;
 unsigned long previousMillis = 0;
 bool canRun = false;
@@ -91,16 +101,16 @@ static duk_ret_t js_native_mouse_move_to(duk_context *ctx) {
   int wait = 20;
 
   int n = duk_get_top(ctx);
-  if (n >2 ) {
+  if (n > 2) {
     step = duk_to_number(ctx, 2);
-    if (step < -127 || step >127){
+    if (step < -127 || step > 127) {
       step = step < 0 ? -127 : 127;
     }
   }
 
   if (n > 3) {
     wait = duk_to_number(ctx, 3);
-    if (wait < 1 ){
+    if (wait < 1) {
       wait = 1;
     }
   }
@@ -313,24 +323,26 @@ void js_setup() {
 }
 //执行js代码
 void js_eval(const char *code) {
+  js_setup();
   duk_push_string(ctx, code);
   duk_int_t rc = duk_peval(ctx);
 
-  if (rc != 0) {
-    duk_safe_to_stacktrace(ctx, -1);
+  if (rc != DUK_EXEC_SUCCESS) {
+    Serial.printf("%s\n", duk_safe_to_stacktrace(ctx, -1));
   } else {
     duk_safe_to_string(ctx, -1);
+    String res = duk_get_string(ctx, -1);
+    if (!res.isEmpty() && strcmp(res.c_str(), "undefined") !=0 ) {
+      Serial.printf("Result: %s\n", res);
+    }
   }
-  // String res = duk_get_string(ctx, -1);
-  // Serial.printf("\n>>> Reslt: %s\n", res ? res : "null");
+
   duk_pop(ctx);
-  //  duk_destroy_heap(ctx);
+  duk_destroy_heap(ctx);
 }
 
 void setup() {
   Serial.begin(115200);
-  js_setup();
-
   js_eval("print('Starting work!');");
   js_eval("pin_mode(2, 3);");
   js_eval("ble_start();");
