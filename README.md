@@ -38,7 +38,11 @@ delay(1000); //waits for a second
 //查看当前运行的脚本代码
 #CAT
 //清空当前运行的脚本代码
-#CLS、#CLEAR
+#CLS 、#CLEAR
+//清空所有寄存器和脚本代码
+#RESETALL
+//清空寄存器
+#RESET
 //运行脚本代码
 #RUN
 //停止脚本运行
@@ -205,6 +209,7 @@ print(rread(0));    //print register0 value(100)
 delay(1000);    //delay 1 sec
 #RUN
 ```
+
 ### 2. 使用组合键
 
 ```js
@@ -225,7 +230,9 @@ delay(1000);
 
 #RUN
 ```
+
 ### 3. 鼠标移动坐标
+
 ```js
 if(ble_check()){
     var count = 100;
@@ -253,71 +260,81 @@ if(ble_check()){
     delay(1000);
 }
 ```
+
 ### 4. 模拟拖动画面
 
-打开 TikTok App 后运行，自动切视频并点♥️。
-
-状态机模式，区分每个动作，根据状态执行。
+- 打开 TikTok App 后运行，自动切视频并点♥️。
+- 状态机模式，区分每个动作，根据状态执行。
+- 请分开多次发送到串口，一次性发送可能导致接收不完整，发送完用 `$CAT` 核对。
 
 ```js
 #CLS
 var REG0 = 0x0;
+var REG1 = 0x1;
 var STAGE_TOCENTER = 0x1;
 var STAGE_TOUP = 0x2;
 var STAGE_DCLICK = 0x3;
 var STAGE_WAIT = 0x4;
 
 if (ble_check()) {
-	var stage = parseInt(rread(REG0));
-	print(stage);
-	print(STAGE_TOCENTER);
-	switch (stage) {
-		case STAGE_TOCENTER:
-			print('TO CENTER');
-			rwrite(REG0, STAGE_DCLICK);
-			mouse_move_to(-10000, -10000);//move to left top
-			delay(10);
-			mouse_move_to(800, 800);//move to screen center
-			delay(10);
-			break;
-		case STAGE_DCLICK:
-			print('DCLICK');
-			rwrite(REG0, STAGE_WAIT);
-			//double click
-			mouse_click(1);
-			delay(100);
-			mouse_click(1);
-			delay(100);
-			break;
-		case STAGE_WAIT:
-			print('WAIT');
-			rwrite(REG0, STAGE_TOUP);
-			//wait 1~5 sec.
-			delay(randRange(1000, 5000));
-			break;
-		case STAGE_TOUP:
-			print('TO UP');
-			rwrite(REG0, STAGE_TOCENTER);
-			mouse_down(1);
-			delay(10);
-			mouse_move_to(0, -700, 10, 15);
-			delay(10);
-			mouse_up(1);
-			delay(600);
-			break;
-		default:
-			print('TO UP');
-			rwrite(REG0, STAGE_TOCENTER);
-			delay(100);
-	}
+    var stage = rread(REG0);
+    switch (stage) {
+        default: //default 0
+            print('INIT');
+            rwrite(REG0, STAGE_TOCENTER);
+            delay(100);
+            break;
+        case STAGE_TOCENTER:
+            print('TO CENTER');
+            rwrite(REG0, STAGE_DCLICK);
+            mouse_move_to(-10000, -10000);//move to left top
+            delay(10);
+            mouse_move_to(800, 800);//move to screen center
+            delay(10);
+            break;
+        case STAGE_TOUP:
+            print('TO UP');
+            rwrite(REG0, STAGE_DCLICK);
+            mouse_down(1);
+            delay(10);
+            mouse_move_to(0, -700, 10, 15);
+            delay(10);
+            mouse_up(1);
+            delay(100);
+            mouse_move_to(0, 700, 10, 15);
+            delay(100);
+            break;
+        case STAGE_DCLICK:
+            print('DCLICK');
+            rwrite(REG0, STAGE_WAIT);
+            //double click
+            mouse_click(1);
+            delay(100);
+            mouse_click(1);
+            delay(100);
+            break;
+        case STAGE_WAIT:
+            print('WAIT');
+            rwrite(REG0, STAGE_TOUP);
+            //wait 1~5 sec.
+            delay(randRange(1000, 5000));
+            if (rread(REG1) > 100) {
+                reclear(); //reset
+            } else {
+                rwrite(REG1, rread(REG1) + 1);//inc reg1
+            }
+            break;
+    }
 }
 //random int (n~m)
 function randRange(n, m) {
-	return parseInt(Math.floor(Math.random() * (m - n)) + n);
+    return parseInt(Math.floor(Math.random() * (m - n)) + n);
 }
 #RUN
 ```
+
 普通流程，注意初始化寄存器第一次修改后，重新发布脚本前，请主动调用 `rclear()` 重置，否则不会执行光标居中逻辑。
+
 ```js
 #CLS
 if (ble_check()) {
@@ -356,8 +373,8 @@ function randRange(n, m) {
     return parseInt(Math.floor(Math.random() * (m - n)) + n);
 }
 #RUN
-
 ```
+
 ### 5. 鼠标滚动和按钮
 
 ```js
@@ -381,10 +398,17 @@ delay(500);
 #RUN
 ```
 
-## 四、开发
+## 四、开发范例
 
 设备与电脑之间的连接通过串口完成。足够满足调试需求。
 串口波特率:`115200`
+
+`test`文件夹为控制端测试例子，`test/examples/`存放的是`tikto`刷视频的实例。
+
+```bash
+cd test
+node app.js ./examples/tiktok.js /dev/cu.wchusbserial14142130 115200
+```
 
 ## 五、三方库
 

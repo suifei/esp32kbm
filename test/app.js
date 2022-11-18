@@ -1,45 +1,24 @@
+const { readFile } = require('fs')
 const { SerialPort, ReadlineParser } = require('serialport')
-const path = "/dev/cu.wchusbserial14143130"
-const baudRate = 115200
-const port = new SerialPort({ path, baudRate })
+
+var args = process.argv; //2=file 3=dev 4=baudRate
+if (args.length < 4) {
+    console.log(`node app.js ./examples/tiktok.js /dev/cu.wchusbserial14142130 115200`);
+    return;
+}
+const file = args[2]
+const dev = args[3]
+const baudRate = parseInt(args[4])
+
+const port = new SerialPort({ path: dev, baudRate })
 const parser = port.pipe(new ReadlineParser())
 
 parser.on('data', console.log)
-
-console.log("发送重新启动 LCTRL  + LALT  + LSHIFT  + CMD  + R ")
-
-
-async function keyDownUp( ...keycodes) {
-    //keydown
-    for (let n = 0; n < keycodes.length; n++){
-        port.write(`D;${keycodes[n]}\n`)
-    }
-    await sleep(1000)
-    //keyup
-    keycodes = keycodes.reverse();
-    for (let n = 0; n < keycodes.length; n++) {
-        port.write(`U;${keycodes[n]}\n`)
-    }
-}
-
-async function keyPress(...keycodes) {
-    //keydown
-    for (let n = 0; n < keycodes.length; n++) {
-        port.write(`P;${keycodes[n]}\n`)
-    }
-}
-
-
-// keyPress(29, 56, 42, 125, 19)
-keyDownUp(42, 30)
-
-keyPress(42, 30)
-
-
-function sleep(time) {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve();
-        }, time);
-    });
-}
+port.write('#CLS\n', 'ascii')
+setTimeout(() => {
+    readFile(file, { encoding: 'ascii' }, (err, data) => {
+        if (err) throw err
+        data.split('\n').forEach(v => { port.write(v + '\n', 'ascii'); console.log(v); })
+        port.write('#RUN\n', 'ascii')
+    })
+}, 100)

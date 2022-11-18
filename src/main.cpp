@@ -332,7 +332,7 @@ void js_eval(const char *code) {
   } else {
     duk_safe_to_string(ctx, -1);
     String res = duk_get_string(ctx, -1);
-    if (!res.isEmpty() && strcmp(res.c_str(), "undefined") !=0 ) {
+    if (!res.isEmpty() && strcmp(res.c_str(), "undefined") != 0) {
       Serial.printf("Result: %s\n", res);
     }
   }
@@ -367,19 +367,26 @@ void loop() {
   if (Serial.available()) {
     digitalWrite(LED, HIGH);
     String cmd = Serial.readStringUntil('\n');
-    if (strcmp(cmd.c_str(), "#CAT") == 0) {
+    if (cmd.equalsIgnoreCase("#CAT")) {
       Serial.println("SCRIPT:");
       Serial.println(script);
-    } else if (strcmp(cmd.c_str(), "#CLS") == 0 ||
-               strcmp(cmd.c_str(), "#CLEAR") == 0) {
+    } else if (cmd.equalsIgnoreCase("#RESETALL")) {
+      Serial.println("RESET,clear all register and script code.");
+      memset(runtime_register, 0, 0x10);
+      script = "";
+      canRun = false;
+    } else if (cmd.equalsIgnoreCase("#RESET")) {
+      Serial.println("RESET,clear all register.");
+      memset(runtime_register, 0, 0x10);
+    } else if (cmd.equalsIgnoreCase("#CLS") || cmd.equalsIgnoreCase("#CLEAR")) {
       Serial.println("SCRIPT CLEAR.");
       script = "";
       canRun = false;
-    } else if (strcmp(cmd.c_str(), "#RUN") == 0) {
+    } else if (cmd.equalsIgnoreCase("#RUN")) {
       Serial.println("SCRIPT RUN.");
       Serial.println(script);
       canRun = true;
-    } else if (strcmp(cmd.c_str(), "#STOP") == 0) {
+    } else if (cmd.equalsIgnoreCase("#STOP")) {
       Serial.println("SCRIPT STOP.");
       canRun = false;
     } else {
