@@ -18,7 +18,7 @@ if (ble_check()) {
             rwrite(REG0, STAGE_DCLICK);
             mouse_move_to(-10000, -10000);//move to left top
             delay(10);
-            mouse_move_to(800, 800);//move to screen center
+            mouse_move_to(800, 1000);//move to screen center
             delay(10);
             break;
         case STAGE_TOUP:
@@ -26,11 +26,11 @@ if (ble_check()) {
             rwrite(REG0, STAGE_DCLICK);
             mouse_down(1);
             delay(10);
-            mouse_move_to(0, -700, 10, 15);
+            mouse_move_to(0, -800, 10, 15);
             delay(10);
             mouse_up(1);
             delay(100);
-            mouse_move_to(0, 700, 10, 15);
+            mouse_move_to(0, 1000, 100, 10);
             delay(100);
             break;
         case STAGE_DCLICK:
@@ -47,8 +47,8 @@ if (ble_check()) {
             rwrite(REG0, STAGE_TOUP);
             //wait 1~5 sec.
             delay(randRange(1000, 5000));
-            if (rread(REG1) > 100) {
-                reclear(); //reset
+            if (rread(REG1) > 20) {
+                rclear(); //reset
             } else {
                 rwrite(REG1, rread(REG1) + 1);//inc reg1
             }

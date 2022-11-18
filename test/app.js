@@ -14,11 +14,14 @@ const port = new SerialPort({ path: dev, baudRate })
 const parser = port.pipe(new ReadlineParser())
 
 parser.on('data', console.log)
+
+port.write('#RESETALL\n', 'ascii')
 port.write('#CLS\n', 'ascii')
+
 setTimeout(() => {
     readFile(file, { encoding: 'ascii' }, (err, data) => {
         if (err) throw err
         data.split('\n').forEach(v => { port.write(v + '\n', 'ascii'); console.log(v); })
         port.write('#RUN\n', 'ascii')
     })
-}, 100)
+}, 1000)

@@ -3,13 +3,6 @@
 #include <duktape.h>
 
 #define LED 2
-// #define DUK_USE_DEBUG
-// #define DUK_USE_DEBUG_LEVEL DUK_LEVEL_DDDEBUG
-// #define DUK_USE_DEBUG_WRITE(level, file, line, func, msg) \
-//   do { \
-//     Serial.printf("D%ld %s:%d (%s): %s\n", (long)(level), (file), \
-//                   (long)(line), (func), (msg)); \
-// } while (0)
 
 duk_context *ctx;
 String script;
