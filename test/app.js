@@ -3,7 +3,7 @@ const { SerialPort, ReadlineParser } = require('serialport')
 
 var args = process.argv; //2=file 3=dev 4=baudRate
 if (args.length < 4) {
-    console.log(`node app.js ./examples/tiktok.js /dev/cu.wchusbserial14142130 115200`);
+    console.log(`node app.js ./dist/tiktok.js /dev/cu.wchusbserial14142130 115200`);
     return;
 }
 const file = args[2]

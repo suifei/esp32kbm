@@ -4,11 +4,14 @@
   "description": "This directory is intended for PlatformIO Test Runner and project tests.",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "uglifyjs examples/tiktok.js -o dist/tiktok.min.js && node app.js dist/tiktok.min.js /dev/cu.wchusbserial14142130 115200"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "serialport": "^10.4.0"
+  },
+  "devDependencies": {
+    "uglify-js": "^3.17.4"
   }
 }
