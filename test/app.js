@@ -3,7 +3,7 @@ const { SerialPort, ReadlineParser } = require('serialport')
 
 var args = process.argv; //2=file 3=dev 4=baudRate
 if (args.length < 4) {
-    console.log(`node app.js ./dist/tiktok.js /dev/cu.wchusbserial14142130 115200`);
+    console.log(`node app.js ./dist/tiktok.min.js /dev/cu.wchusbserial14142130 115200`);
     return;
 }
 const file = args[2]
@@ -15,18 +15,19 @@ const parser = port.pipe(new ReadlineParser())
 
 parser.on('data', console.log)
 
-port.write('#RESETALL\n')
+port.write('#RESETALL\0')
+
 setTimeout(() => {
-    port.write('#CLS\n')
+    port.write('#CLS\0')
 
     setTimeout(() => {
         readFile(file, { encoding: 'ascii' }, (err, data) => {
             if (err) throw err
-            data.split('\n').forEach(v => {
-                port.write(v.trim() + '\n');
-                console.log(v)
+            data.split(";").forEach(buf => {
+                console.log('SEND[0x' + (buf.length + 2).toString(16) + ']', buf + ";")
+                port.write(buf + ";\0")
             })
-            port.write('#RUN\n')
+            port.write('#RUN\0')
         })
     }, 1000)
 

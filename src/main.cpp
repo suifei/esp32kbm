@@ -2,16 +2,16 @@
 #include <BleCombo.h>
 #include <duktape.h>
 
-#include "config.h"
+#include <config.h>
 
 duk_context *ctx;
 String script;
 
 int ledState = LOW;
-unsigned long previousMillis = 0;
+unsigned long lastMillis = 0;
 bool canRun = false;
-int32_t runtime_register[0x10] = {0, 0, 0, 0, 0, 0, 0, 0,
-                                  0, 0, 0, 0, 0, 0, 0, 0};
+int32_t runtime_register[0x10] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 //清空寄存器
 static duk_ret_t js_native_rclear(duk_context *ctx) {
@@ -326,11 +326,13 @@ void js_eval(const char *code) {
     canRun = false;
 
   } else {
+
     duk_safe_to_string(ctx, -1);
     String res = duk_get_string(ctx, -1);
-    if (!res.isEmpty() && strcmp(res.c_str(), "undefined") != 0) {
+    if (!res.isEmpty() && !res.equals("undefined")) {
       Serial.printf("Result: %s\n", res);
     }
+    
   }
 
   duk_pop(ctx);
@@ -348,10 +350,10 @@ void setup() {
 
 void flashLED(){
   unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= 500) {
+  if (currentMillis - lastMillis >= 500) {
     ledState = (ledState == LOW) ? HIGH : LOW;
     digitalWrite(LED, ledState);
-    previousMillis = currentMillis;
+    lastMillis = currentMillis;
   }
 }
 
@@ -360,8 +362,8 @@ void handleMessage() {
   if (canRun && !script.isEmpty()) {
     digitalWrite(LED, HIGH);
     js_eval(script.c_str());
-    Serial.print(".");
     digitalWrite(LED, LOW);
+    Serial.print(".");
 
   } else {
     canRun = false;
@@ -373,7 +375,7 @@ void handleMessage() {
 void loop() {
   if (Serial.available()) {
     digitalWrite(LED, HIGH);
-    String cmd = Serial.readStringUntil('\n');
+    String cmd = Serial.readStringUntil('\0');
     if (cmd.equalsIgnoreCase("#CAT")) {
       Serial.println("SCRIPT:");
       Serial.println(script);
@@ -397,7 +399,7 @@ void loop() {
       Serial.println("SCRIPT STOP.");
       canRun = false;
     } else {
-      script += cmd + "\n";
+      script += cmd;
       Serial.println("OK");
     }
     digitalWrite(LED, LOW);
@@ -407,7 +409,5 @@ void loop() {
 
   if (!Keyboard.isConnected()) {
     flashLED();
-  } else if (ledState == HIGH) {
-    digitalWrite(LED, LOW);
   }
 }

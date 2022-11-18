@@ -30,10 +30,10 @@ delay(1000); //waits for a second
 
 ## 二、命令
 
-命令的结构很简单。区分为系统命令和脚本代码指令。回车符`\n`结束命令。注意，系统命令不支持行内注解。
+命令的结构很简单。区分为系统命令和脚本代码指令。`\0`结束命令。
 
 ### 1. 系统命令
-
+注意，系统命令不支持行内注解。
 ```javascript
 //查看当前运行的脚本代码
 #CAT
@@ -50,7 +50,7 @@ delay(1000); //waits for a second
 ```
 
 ### 2. 脚本代码指令
-
+注意，脚本代码指令并不支持Unicode，因为是处理进程没有必要。
 ```javascript
 //全局寄存器16个，每个存储32位值，从0-15读写
 rclear([i]); //清空寄存器，i<0或不传则清空全部，返回 true, false
@@ -275,8 +275,9 @@ node app.js ./examples/tiktok.js /dev/cu.wchusbserial14142130 115200
 ```
 - NPM 启动（推荐），修改 `package.json` 的 `test` 命令，改成正确的`串口路径`
 ```bash
-npm i
-npm test
+npm i #安装依赖库
+npm run build #编译
+npm run test #运行
 ```
 
 普通流程，注意初始化寄存器第一次修改后，重新发布脚本前，请主动调用 `rclear()` 重置，否则不会执行光标居中逻辑。
@@ -348,13 +349,7 @@ delay(500);
 
 设备与电脑之间的连接通过串口完成。足够满足调试需求。
 串口波特率:`115200`
-
-`test`文件夹为控制端测试例子，`test/examples/`存放的是`tikto`刷视频的实例。
-
-```bash
-cd test
-node app.js ./examples/tiktok.js /dev/cu.wchusbserial14142130 115200
-```
+`test`文件夹为控制端测试例子，`test/examples/`存放的是`tiktok`刷视频的实例。
 
 ## 五、三方库
 
