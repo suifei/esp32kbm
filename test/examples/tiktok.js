@@ -4,11 +4,11 @@ var T_TC = 0x1;
 var T_TU = 0x2;
 var T_TDC = 0x3;
 var T_TW = 0x4;
-var T_M = 900;
+var T_M = 800;
 
 if (ble_check()) {
     var stage = rread(R0);
-    var mx = rand(-150, 150);
+    var mx = rand(-50, 50);
     switch (stage) {
         default: //default 0
             print('INIT');
@@ -20,7 +20,7 @@ if (ble_check()) {
             rwrite(R0, T_TDC);
             mouse_move_to(-10000, -10000);//move to left top
             delay(100);
-            mouse_move_to(800, T_M);//move to screen center
+            mouse_move_to(200, T_M,10,100);//move to screen center
             delay(100);
             break;
         case T_TU:
@@ -28,11 +28,11 @@ if (ble_check()) {
             rwrite(R0, T_TDC);
             mouse_down(1);
             delay(10);
-            mouse_move_to(-mx, -T_M, 50, 15);
+            mouse_move_to(-mx, -T_M, 10, 50);
             delay(10);
             mouse_up(1);
             delay(10);
-            mouse_move_to(mx, T_M, 100, 10);
+            mouse_move_to(mx, T_M, 10, 50);
             delay(10);
             break;
         case T_TDC:
@@ -40,13 +40,13 @@ if (ble_check()) {
             var my = rand(0, 300);
             rwrite(R0, T_TW);
             //double click
-            mouse_move_to(-mx, -my, 50, 15);//random position
+            mouse_move_to(-mx, -my, 4, 15);//random position
             delay(10);
             mouse_click(1);
             delay(100);
             mouse_click(1);
             delay(100);
-            mouse_move_to(mx, my, 50, 15);//restore
+            mouse_move_to(mx, my, 4, 15);//restore
             delay(10);
             break;
         case T_TW:

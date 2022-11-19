@@ -5,11 +5,13 @@
   "main": "app.js",
   "scripts": {
     "build": "uglifyjs examples/tiktok.js -m -o dist/tiktok.min.js",
-    "test": "node app.js dist/tiktok.min.js /dev/cu.wchusbserial14142130 115200"
+    "test": "node app.js dist/tiktok.min.js /dev/cu.wchusbserial320 115200",
+    "start": "npm run build && npm run test"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "async": "^3.2.4",
     "serialport": "^10.4.0"
   },
   "devDependencies": {
